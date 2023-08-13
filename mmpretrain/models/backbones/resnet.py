@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import math
 
+import torch
 import torch.nn as nn
 import torch.utils.checkpoint as cp
 from mmcv.cnn import (ConvModule, build_activation_layer, build_conv_layer,
@@ -334,6 +336,8 @@ class ResLayer(nn.Sequential):
             layer. Default: None
         norm_cfg (dict): dictionary to construct and config norm layer.
             Default: dict(type='BN')
+        drop_path_rate (float or list): stochastic depth rate.
+            Default: 0.
     """
 
     def __init__(self,
@@ -346,9 +350,16 @@ class ResLayer(nn.Sequential):
                  avg_down=False,
                  conv_cfg=None,
                  norm_cfg=dict(type='BN'),
+                 drop_path_rate=0.0,
                  **kwargs):
         self.block = block
         self.expansion = get_expansion(block, expansion)
+
+        if isinstance(drop_path_rate, float):
+            drop_path_rate = [drop_path_rate] * num_blocks
+
+        assert len(drop_path_rate
+                   ) == num_blocks, 'Please check the length of drop_path_rate'
 
         downsample = None
         if stride != 1 or in_channels != out_channels:
@@ -384,6 +395,7 @@ class ResLayer(nn.Sequential):
                 downsample=downsample,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
+                drop_path_rate=drop_path_rate[0],
                 **kwargs))
         in_channels = out_channels
         for i in range(1, num_blocks):
@@ -395,6 +407,7 @@ class ResLayer(nn.Sequential):
                     stride=1,
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
+                    drop_path_rate=drop_path_rate[i],
                     **kwargs))
         super(ResLayer, self).__init__(*layers)
 
@@ -518,6 +531,13 @@ class ResNet(BaseBackbone):
         self.res_layers = []
         _in_channels = stem_channels
         _out_channels = base_channels * self.expansion
+
+        # stochastic depth decay rule
+        total_depth = sum(stage_blocks)
+        dpr = [
+            x.item() for x in torch.linspace(0, drop_path_rate, total_depth)
+        ]
+
         for i, num_blocks in enumerate(self.stage_blocks):
             stride = strides[i]
             dilation = dilations[i]
@@ -534,9 +554,10 @@ class ResNet(BaseBackbone):
                 with_cp=with_cp,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
-                drop_path_rate=drop_path_rate)
+                drop_path_rate=dpr[:num_blocks])
             _in_channels = _out_channels
             _out_channels *= 2
+            dpr = dpr[num_blocks:]
             layer_name = f'layer{i + 1}'
             self.add_module(layer_name, res_layer)
             self.res_layers.append(layer_name)
@@ -654,6 +675,64 @@ class ResNet(BaseBackbone):
                 # trick: eval have effect on BatchNorm only
                 if isinstance(m, _BatchNorm):
                     m.eval()
+
+    def get_layer_depth(self, param_name: str, prefix: str = ''):
+        """Get the layer id to set the different learning rates for ResNet.
+
+        ResNet stages:
+        50  :    [3, 4, 6, 3]
+        101 :    [3, 4, 23, 3]
+        152 :    [3, 8, 36, 3]
+        200 :    [3, 24, 36, 3]
+        eca269d: [3, 30, 48, 8]
+
+        Args:
+            param_name (str): The name of the parameter.
+            prefix (str): The prefix for the parameter.
+                Defaults to an empty string.
+
+        Returns:
+            Tuple[int, int]: The layer-wise depth and the num of layers.
+        """
+        depths = self.stage_blocks
+        if depths[1] == 4 and depths[2] == 6:
+            blk2, blk3 = 2, 3
+        elif depths[1] == 4 and depths[2] == 23:
+            blk2, blk3 = 2, 3
+        elif depths[1] == 8 and depths[2] == 36:
+            blk2, blk3 = 4, 4
+        elif depths[1] == 24 and depths[2] == 36:
+            blk2, blk3 = 4, 4
+        elif depths[1] == 30 and depths[2] == 48:
+            blk2, blk3 = 5, 6
+        else:
+            raise NotImplementedError
+
+        N2, N3 = math.ceil(depths[1] / blk2 -
+                           1e-5), math.ceil(depths[2] / blk3 - 1e-5)
+        N = 2 + N2 + N3  # r50: 2 + 2 + 2 = 6
+        max_layer_id = N + 1  # r50: 2 + 2 + 2 + 1(like head) = 7
+
+        if not param_name.startswith(prefix):
+            # For subsequent module like head
+            return max_layer_id, max_layer_id + 1
+
+        if param_name.startswith('backbone.layer'):
+            stage_id = int(param_name.split('.')[1][5:])
+            block_id = int(param_name.split('.')[2])
+
+            if stage_id == 1:
+                layer_id = 1
+            elif stage_id == 2:
+                layer_id = 2 + block_id // blk2  # r50: 2, 3
+            elif stage_id == 3:
+                layer_id = 2 + N2 + block_id // blk3  # r50: 4, 5
+            else:  # stage_id == 4
+                layer_id = N  # r50: 6
+            return layer_id, max_layer_id + 1
+
+        else:
+            return 0, max_layer_id + 1
 
 
 @MODELS.register_module()

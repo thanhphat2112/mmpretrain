@@ -195,8 +195,12 @@ def add_usage(metafile):
     if train_model:
         template = TRAIN_TEST_TEMPLATE
         inputs['train_config'] = train_model[0].config
-    else:
+    elif len(filter_models_by_task(models, task='any')) > 0:
         template = TEST_ONLY_TEMPLATE
+    else:
+        content.append('\n<!-- [TABS-END] -->\n')
+        return '\n'.join(content)
+
     test_model = filter_models_by_task(models, task='any')[0]
     inputs['test_config'] = test_model.config
     inputs['test_weights'] = test_model.weights
@@ -297,7 +301,7 @@ def generate_model_table(models,
     if any('Converted From' in model.data for model in models):
         table_string += (
             f"\n*Models with \* are converted from the [official repo]({converted_from['Code']}). "
-            "The config files of these models are only for inference. We haven't reprodcue the training results.*\n"
+            "The config files of these models are only for inference. We haven't reproduce the training results.*\n"
         )
 
     return table_string
@@ -327,6 +331,12 @@ def add_models(metafile):
         'Image Classification',
         'Image Retrieval',
         'Multi-Label Classification',
+        'Image Caption',
+        'Visual Grounding',
+        'Visual Question Answering',
+        'Image-To-Text Retrieval',
+        'Text-To-Image Retrieval',
+        'NLVR',
     ]
 
     for task in tasks:

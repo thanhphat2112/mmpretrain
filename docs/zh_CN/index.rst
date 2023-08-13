@@ -78,6 +78,7 @@ MMPretrain 上手路线
    useful_tools/dataset_visualization.md
    useful_tools/scheduler_visualization.md
    useful_tools/cam_visualization.md
+   useful_tools/t-sne_visualization.md
 
 .. _分析工具:
 .. toctree::
@@ -88,6 +89,8 @@ MMPretrain 上手路线
    useful_tools/verify_dataset.md
    useful_tools/log_result_analysis.md
    useful_tools/complexity_analysis.md
+   useful_tools/confusion_matrix.md
+   useful_tools/shape_bias.md
 
 .. toctree::
    :maxdepth: 1
@@ -126,6 +129,12 @@ MMPretrain 上手路线
    notes/faq.md
    notes/pretrain_custom_dataset.md
    notes/finetune_custom_dataset.md
+
+.. toctree::
+   :maxdepth: 1
+   :caption: 设备支持
+
+   device/npu.md
 
 .. toctree::
    :caption: 切换语言

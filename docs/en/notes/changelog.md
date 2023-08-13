@@ -1,5 +1,129 @@
 # Changelog (MMPreTrain)
 
+## v1.0.1(28/07/2023)
+
+### Improvements
+
+- Add init_cfg with type='pretrained' to downstream tasks ([#1717](https://github.com/open-mmlab/mmpretrain/pull/1717)
+- Set 'is_init' in some multimodal methods ([#1718](https://github.com/open-mmlab/mmpretrain/pull/1718)
+- Adapt test cases on Ascend NPU ([#1728](https://github.com/open-mmlab/mmpretrain/pull/1728)
+- Add GPU Acceleration Apple silicon mac ([#1699](https://github.com/open-mmlab/mmpretrain/pull/1699)
+- BEiT refactor ([#1705](https://github.com/open-mmlab/mmpretrain/pull/1705)
+
+### Bug Fixes
+
+- Fix dict update in minigpt4. ([#1709](https://github.com/open-mmlab/mmpretrain/pull/1709)
+- Fix nested predict for multi-task prediction ([#1716](https://github.com/open-mmlab/mmpretrain/pull/1716)
+- Fix the issue #1711 "GaussianBlur doesn't work" ([#1722](https://github.com/open-mmlab/mmpretrain/pull/1722)
+- Just to correct a typo of 'target' ([#1655](https://github.com/open-mmlab/mmpretrain/pull/1655)
+- Fix freeze without cls_token in vit ([#1693](https://github.com/open-mmlab/mmpretrain/pull/1693)
+- Fix RandomCrop bug ([#1706](https://github.com/open-mmlab/mmpretrain/pull/1706)
+
+### Docs Update
+
+- Fix spelling ([#1689](https://github.com/open-mmlab/mmpretrain/pull/1689)
+
+## v1.0.0(04/07/2023)
+
+### Highlights
+
+- Support inference of more **multi-modal** algorithms, such as **LLaVA**, **MiniGPT-4**, **Otter**, etc.
+- Support around **10 multi-modal datasets**!
+- Add **iTPN**, **SparK** self-supervised learning algorithms.
+- Provide examples of [New Config](https://github.com/open-mmlab/mmpretrain/tree/main/mmpretrain/configs/) and [DeepSpeed/FSDP](https://github.com/open-mmlab/mmpretrain/tree/main/configs/mae/benchmarks/).
+
+### New Features
+
+- Transfer shape-bias tool from mmselfsup ([#1658](https://github.com/open-mmlab/mmpretrain/pull/1685))
+- Download dataset by using MIM&OpenDataLab ([#1630](https://github.com/open-mmlab/mmpretrain/pull/1630))
+- Support New Configs ([#1639](https://github.com/open-mmlab/mmpretrain/pull/1639), [#1647](https://github.com/open-mmlab/mmpretrain/pull/1647), [#1665](https://github.com/open-mmlab/mmpretrain/pull/1665))
+- Support Flickr30k Retrieval dataset ([#1625](https://github.com/open-mmlab/mmpretrain/pull/1625))
+- Support SparK ([#1531](https://github.com/open-mmlab/mmpretrain/pull/1531))
+- Support LLaVA ([#1652](https://github.com/open-mmlab/mmpretrain/pull/1652))
+- Support Otter ([#1651](https://github.com/open-mmlab/mmpretrain/pull/1651))
+- Support MiniGPT-4 ([#1642](https://github.com/open-mmlab/mmpretrain/pull/1642))
+- Add support for VizWiz dataset ([#1636](https://github.com/open-mmlab/mmpretrain/pull/1636))
+- Add support for vsr dataset ([#1634](https://github.com/open-mmlab/mmpretrain/pull/1634))
+- Add InternImage Classification project ([#1569](https://github.com/open-mmlab/mmpretrain/pull/1569))
+- Support OCR-VQA dataset ([#1621](https://github.com/open-mmlab/mmpretrain/pull/1621))
+- Support OK-VQA dataset ([#1615](https://github.com/open-mmlab/mmpretrain/pull/1615))
+- Support TextVQA dataset ([#1569](https://github.com/open-mmlab/mmpretrain/pull/1569))
+- Support iTPN and HiViT ([#1584](https://github.com/open-mmlab/mmpretrain/pull/1584))
+- Add retrieval mAP metric ([#1552](https://github.com/open-mmlab/mmpretrain/pull/1552))
+- Support NoCap dataset based on BLIP. ([#1582](https://github.com/open-mmlab/mmpretrain/pull/1582))
+- Add GQA dataset ([#1585](https://github.com/open-mmlab/mmpretrain/pull/1585))
+
+### Improvements
+
+- Update fsdp vit-huge and vit-large config ([#1675](https://github.com/open-mmlab/mmpretrain/pull/1675))
+- Support deepspeed with flexible runner ([#1673](https://github.com/open-mmlab/mmpretrain/pull/1673))
+- Update Otter and LLaVA docs and config. ([#1653](https://github.com/open-mmlab/mmpretrain/pull/1653))
+- Add image_only param of ScienceQA ([#1613](https://github.com/open-mmlab/mmpretrain/pull/1613))
+- Support to use "split" to specify training set/validation ([#1535](https://github.com/open-mmlab/mmpretrain/pull/1535))
+
+### Bug Fixes
+
+- Refactor \_prepare_pos_embed in ViT ([#1656](https://github.com/open-mmlab/mmpretrain/pull/1656)， [#1679](https://github.com/open-mmlab/mmpretrain/pull/1679))
+- Freeze pre norm in vision transformer ([#1672](https://github.com/open-mmlab/mmpretrain/pull/1672))
+- Fix bug loading IN1k dataset ([#1641](https://github.com/open-mmlab/mmpretrain/pull/1641))
+- Fix sam bug ([#1633](https://github.com/open-mmlab/mmpretrain/pull/1633))
+- Fixed circular import error for new transform ([#1609](https://github.com/open-mmlab/mmpretrain/pull/1609))
+- Update torchvision transform wrapper ([#1595](https://github.com/open-mmlab/mmpretrain/pull/1595))
+- Set default out_type in CAM visualization ([#1586](https://github.com/open-mmlab/mmpretrain/pull/1586))
+
+### Docs Update
+
+- Fix spelling ([#1681](https://github.com/open-mmlab/mmpretrain/pull/1681))
+- Fix doc typos ([#1671](https://github.com/open-mmlab/mmpretrain/pull/1671), [#1644](https://github.com/open-mmlab/mmpretrain/pull/1644), [#1629](https://github.com/open-mmlab/mmpretrain/pull/1629))
+- Add t-SNE visualization doc ([#1555](https://github.com/open-mmlab/mmpretrain/pull/1555))
+
+## v1.0.0rc8(22/05/2023)
+
+### Highlights
+
+- Support multiple multi-modal algorithms and inferencers. You can explore these features by the [gradio demo](https://github.com/open-mmlab/mmpretrain/tree/main/projects/gradio_demo)!
+- Add EVA-02, Dino-V2, ViT-SAM and GLIP backbones.
+- Register torchvision transforms into MMPretrain, you can now easily integrate torchvision's data augmentations in MMPretrain.
+
+### New Features
+
+- Support Chinese CLIP. ([#1576](https://github.com/open-mmlab/mmpretrain/pull/1576))
+- Add ScienceQA Metrics ([#1577](https://github.com/open-mmlab/mmpretrain/pull/1577))
+- Support multiple multi-modal algorithms and inferencers. ([#1561](https://github.com/open-mmlab/mmpretrain/pull/1561))
+- add eva02 backbone ([#1450](https://github.com/open-mmlab/mmpretrain/pull/1450))
+- Support dinov2 backbone ([#1522](https://github.com/open-mmlab/mmpretrain/pull/1522))
+- Support some downstream classification datasets. ([#1467](https://github.com/open-mmlab/mmpretrain/pull/1467))
+- Support GLIP ([#1308](https://github.com/open-mmlab/mmpretrain/pull/1308))
+- Register torchvision transforms into mmpretrain ([#1265](https://github.com/open-mmlab/mmpretrain/pull/1265))
+- Add ViT of SAM ([#1476](https://github.com/open-mmlab/mmpretrain/pull/1476))
+
+### Improvements
+
+- [Refactor] Support to freeze channel reduction and add layer decay function ([#1490](https://github.com/open-mmlab/mmpretrain/pull/1490))
+- [Refactor] Support resizing pos_embed while loading ckpt and format output ([#1488](https://github.com/open-mmlab/mmpretrain/pull/1488))
+
+### Bug Fixes
+
+- Fix scienceqa ([#1581](https://github.com/open-mmlab/mmpretrain/pull/1581))
+- Fix config of beit ([#1528](https://github.com/open-mmlab/mmpretrain/pull/1528))
+- Incorrect stage freeze on RIFormer Model ([#1573](https://github.com/open-mmlab/mmpretrain/pull/1573))
+- Fix ddp bugs caused by `out_type`. ([#1570](https://github.com/open-mmlab/mmpretrain/pull/1570))
+- Fix multi-task-head loss potential bug ([#1530](https://github.com/open-mmlab/mmpretrain/pull/1530))
+- Support bce loss without batch augmentations ([#1525](https://github.com/open-mmlab/mmpretrain/pull/1525))
+- Fix clip generator init bug ([#1518](https://github.com/open-mmlab/mmpretrain/pull/1518))
+- Fix the bug in binary cross entropy loss ([#1499](https://github.com/open-mmlab/mmpretrain/pull/1499))
+
+### Docs Update
+
+- Update PoolFormer citation to CVPR version ([#1505](https://github.com/open-mmlab/mmpretrain/pull/1505))
+- Refine Inference Doc ([#1489](https://github.com/open-mmlab/mmpretrain/pull/1489))
+- Add doc for usage of confusion matrix ([#1513](https://github.com/open-mmlab/mmpretrain/pull/1513))
+- Update MMagic link ([#1517](https://github.com/open-mmlab/mmpretrain/pull/1517))
+- Fix example_project README ([#1575](https://github.com/open-mmlab/mmpretrain/pull/1575))
+- Add NPU support page ([#1481](https://github.com/open-mmlab/mmpretrain/pull/1481))
+- train cfg: Removed old description ([#1473](https://github.com/open-mmlab/mmpretrain/pull/1473))
+- Fix typo in MultiLabelDataset docstring ([#1483](https://github.com/open-mmlab/mmpretrain/pull/1483))
+
 ## v1.0.0rc7(07/04/2023)
 
 ### Highlights

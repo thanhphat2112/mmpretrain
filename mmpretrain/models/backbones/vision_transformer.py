@@ -9,8 +9,8 @@ from mmengine.model import BaseModule, ModuleList
 from mmengine.model.weight_init import trunc_normal_
 
 from mmpretrain.registry import MODELS
-from ..utils import (MultiheadAttention, build_norm_layer, resize_pos_embed,
-                     to_2tuple)
+from ..utils import (MultiheadAttention, SwiGLUFFNFused, build_norm_layer,
+                     resize_pos_embed, to_2tuple)
 from .base_backbone import BaseBackbone
 
 
@@ -21,6 +21,8 @@ class TransformerEncoderLayer(BaseModule):
         embed_dims (int): The feature dimension
         num_heads (int): Parallel attention heads
         feedforward_channels (int): The hidden dimension for FFNs
+        layer_scale_init_value (float or torch.Tensor): Init value of layer
+            scale. Defaults to 0.
         drop_rate (float): Probability of an element to be zeroed
             after the feed forward layer. Defaults to 0.
         attn_drop_rate (float): The drop out rate for attention output weights.
@@ -29,8 +31,9 @@ class TransformerEncoderLayer(BaseModule):
         num_fcs (int): The number of fully-connected layers for FFNs.
             Defaults to 2.
         qkv_bias (bool): enable bias for qkv if True. Defaults to True.
+        ffn_type (str): Select the type of ffn layers. Defaults to 'origin'.
         act_cfg (dict): The activation config for FFNs.
-            Defaluts to ``dict(type='GELU')``.
+            Defaults to ``dict(type='GELU')``.
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to ``dict(type='LN')``.
         init_cfg (dict, optional): Initialization config dict.
@@ -41,11 +44,13 @@ class TransformerEncoderLayer(BaseModule):
                  embed_dims,
                  num_heads,
                  feedforward_channels,
+                 layer_scale_init_value=0.,
                  drop_rate=0.,
                  attn_drop_rate=0.,
                  drop_path_rate=0.,
                  num_fcs=2,
                  qkv_bias=True,
+                 ffn_type='origin',
                  act_cfg=dict(type='GELU'),
                  norm_cfg=dict(type='LN'),
                  init_cfg=None):
@@ -61,17 +66,27 @@ class TransformerEncoderLayer(BaseModule):
             attn_drop=attn_drop_rate,
             proj_drop=drop_rate,
             dropout_layer=dict(type='DropPath', drop_prob=drop_path_rate),
-            qkv_bias=qkv_bias)
+            qkv_bias=qkv_bias,
+            layer_scale_init_value=layer_scale_init_value)
 
         self.ln2 = build_norm_layer(norm_cfg, self.embed_dims)
 
-        self.ffn = FFN(
-            embed_dims=embed_dims,
-            feedforward_channels=feedforward_channels,
-            num_fcs=num_fcs,
-            ffn_drop=drop_rate,
-            dropout_layer=dict(type='DropPath', drop_prob=drop_path_rate),
-            act_cfg=act_cfg)
+        if ffn_type == 'origin':
+            self.ffn = FFN(
+                embed_dims=embed_dims,
+                feedforward_channels=feedforward_channels,
+                num_fcs=num_fcs,
+                ffn_drop=drop_rate,
+                dropout_layer=dict(type='DropPath', drop_prob=drop_path_rate),
+                act_cfg=act_cfg,
+                layer_scale_init_value=layer_scale_init_value)
+        elif ffn_type == 'swiglu_fused':
+            self.ffn = SwiGLUFFNFused(
+                embed_dims=embed_dims,
+                feedforward_channels=feedforward_channels,
+                layer_scale_init_value=layer_scale_init_value)
+        else:
+            raise NotImplementedError
 
     @property
     def norm1(self):
@@ -147,6 +162,8 @@ class VisionTransformer(BaseBackbone):
             -1 means not freezing any parameters. Defaults to -1.
         interpolate_mode (str): Select the interpolate mode for position
             embeding vector resize. Defaults to "bicubic".
+        layer_scale_init_value (float or torch.Tensor): Init value of layer
+            scale. Defaults to 0.
         patch_cfg (dict): Configs of patch embeding. Defaults to an empty dict.
         layer_cfgs (Sequence | dict): Configs of each transformer layer in
             encoder. Defaults to an empty dict.
@@ -203,7 +220,7 @@ class VisionTransformer(BaseBackbone):
                 'feedforward_channels': 192 * 4
             }),
         **dict.fromkeys(
-            ['deit-s', 'deit-small'], {
+            ['deit-s', 'deit-small', 'dinov2-s', 'dinov2-small'], {
                 'embed_dims': 384,
                 'num_layers': 12,
                 'num_heads': 6,
@@ -215,6 +232,13 @@ class VisionTransformer(BaseBackbone):
                 'num_layers': 12,
                 'num_heads': 12,
                 'feedforward_channels': 768 * 4
+            }),
+        **dict.fromkeys(
+            ['dinov2-g', 'dinov2-giant'], {
+                'embed_dims': 1536,
+                'num_layers': 40,
+                'num_heads': 24,
+                'feedforward_channels': 6144
             }),
     }
     num_extra_tokens = 1  # class token
@@ -235,6 +259,7 @@ class VisionTransformer(BaseBackbone):
                  with_cls_token=True,
                  frozen_stages=-1,
                  interpolate_mode='bicubic',
+                 layer_scale_init_value=0.,
                  patch_cfg=dict(),
                  layer_cfgs=dict(),
                  pre_norm=False,
@@ -280,6 +305,7 @@ class VisionTransformer(BaseBackbone):
         self.out_type = out_type
 
         # Set cls token
+        self.with_cls_token = with_cls_token
         if with_cls_token:
             self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dims))
         elif out_type != 'cls_token':
@@ -322,6 +348,7 @@ class VisionTransformer(BaseBackbone):
                 num_heads=self.arch_settings['num_heads'],
                 feedforward_channels=self.
                 arch_settings['feedforward_channels'],
+                layer_scale_init_value=layer_scale_init_value,
                 drop_rate=drop_rate,
                 drop_path_rate=dpr[i],
                 qkv_bias=qkv_bias,
@@ -367,6 +394,12 @@ class VisionTransformer(BaseBackbone):
             return
 
         ckpt_pos_embed_shape = state_dict[name].shape
+        if (not self.with_cls_token
+                and ckpt_pos_embed_shape[1] == self.pos_embed.shape[1] + 1):
+            # Remove cls token from state dict if it's not used.
+            state_dict[name] = state_dict[name][:, 1:]
+            ckpt_pos_embed_shape = state_dict[name].shape
+
         if self.pos_embed.shape != ckpt_pos_embed_shape:
             from mmengine.logging import MMLogger
             logger = MMLogger.get_current_instance()
@@ -399,8 +432,12 @@ class VisionTransformer(BaseBackbone):
         self.patch_embed.eval()
         for param in self.patch_embed.parameters():
             param.requires_grad = False
+        # freeze pre-norm
+        for param in self.pre_norm.parameters():
+            param.requires_grad = False
         # freeze cls_token
-        self.cls_token.requires_grad = False
+        if self.cls_token:
+            self.cls_token.requires_grad = False
         # freeze layers
         for i in range(1, self.frozen_stages + 1):
             m = self.layers[i - 1]
@@ -408,10 +445,16 @@ class VisionTransformer(BaseBackbone):
             for param in m.parameters():
                 param.requires_grad = False
         # freeze the last layer norm
-        if self.frozen_stages == len(self.layers) and self.final_norm:
-            self.ln1.eval()
-            for param in self.ln1.parameters():
-                param.requires_grad = False
+        if self.frozen_stages == len(self.layers):
+            if self.final_norm:
+                self.ln1.eval()
+                for param in self.ln1.parameters():
+                    param.requires_grad = False
+
+            if self.out_type == 'avg_featmap':
+                self.ln2.eval()
+                for param in self.ln2.parameters():
+                    param.requires_grad = False
 
     def forward(self, x):
         B = x.shape[0]

@@ -1169,7 +1169,7 @@ class GaussianBlur(BaseAugTransform):
 
         img = results['img']
         pil_img = Image.fromarray(img)
-        pil_img.filter(ImageFilter.GaussianBlur(radius=radius))
+        pil_img = pil_img.filter(ImageFilter.GaussianBlur(radius=radius))
         results['img'] = np.array(pil_img, dtype=img.dtype)
 
         return results
@@ -1233,5 +1233,12 @@ RANDAUG_POLICIES = {
         dict(type='Shear', magnitude_range=(0, 0.3), direction='vertical'),
         dict(type='Translate', magnitude_range=(0, 0.45), direction='horizontal'),
         dict(type='Translate', magnitude_range=(0, 0.45), direction='vertical'),
+    ],
+    'simple_increasing': [
+        dict(type='AutoContrast'),
+        dict(type='Equalize'),
+        dict(type='Rotate', magnitude_range=(0, 30)),
+        dict(type='Shear', magnitude_range=(0, 0.3), direction='horizontal'),
+        dict(type='Shear', magnitude_range=(0, 0.3), direction='vertical'),
     ],
 }

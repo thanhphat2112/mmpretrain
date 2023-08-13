@@ -92,6 +92,7 @@ We always welcome *PRs* and *Issues* for the betterment of MMPretrain.
    useful_tools/dataset_visualization.md
    useful_tools/scheduler_visualization.md
    useful_tools/cam_visualization.md
+   useful_tools/t-sne_visualization.md
 
 .. _Analysis:
 .. toctree::
@@ -102,6 +103,8 @@ We always welcome *PRs* and *Issues* for the betterment of MMPretrain.
    useful_tools/verify_dataset.md
    useful_tools/log_result_analysis.md
    useful_tools/complexity_analysis.md
+   useful_tools/confusion_matrix.md
+   useful_tools/shape_bias.md
 
 .. toctree::
    :maxdepth: 1
@@ -140,6 +143,12 @@ We always welcome *PRs* and *Issues* for the betterment of MMPretrain.
    notes/faq.md
    notes/pretrain_custom_dataset.md
    notes/finetune_custom_dataset.md
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Device Support
+
+   device/npu.md
 
 Indices and tables
 ==================

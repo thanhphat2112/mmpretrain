@@ -13,6 +13,7 @@ from .edgenext import EdgeNeXt
 from .efficientformer import EfficientFormer
 from .efficientnet import EfficientNet
 from .efficientnet_v2 import EfficientNetV2
+from .hivit import HiViT
 from .hornet import HorNet
 from .hrnet import HRNet
 from .inception_v3 import InceptionV3
@@ -41,6 +42,8 @@ from .seresnet import SEResNet
 from .seresnext import SEResNeXt
 from .shufflenet_v1 import ShuffleNetV1
 from .shufflenet_v2 import ShuffleNetV2
+from .sparse_convnext import SparseConvNeXt
+from .sparse_resnet import SparseResNet
 from .swin_transformer import SwinTransformer
 from .swin_transformer_v2 import SwinTransformerV2
 from .t2t_vit import T2T_ViT
@@ -52,6 +55,8 @@ from .van import VAN
 from .vgg import VGG
 from .vig import PyramidVig, Vig
 from .vision_transformer import VisionTransformer
+from .vit_eva02 import ViTEVA02
+from .vit_sam import ViTSAM
 from .xcit import XCiT
 
 __all__ = [
@@ -116,4 +121,9 @@ __all__ = [
     'Vig',
     'PyramidVig',
     'XCiT',
+    'ViTSAM',
+    'ViTEVA02',
+    'HiViT',
+    'SparseResNet',
+    'SparseConvNeXt',
 ]
